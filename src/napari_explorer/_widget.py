@@ -6,41 +6,64 @@ see: https://napari.org/stable/plugins/guides.html?#widgets
 
 Replace code below according to your needs.
 """
+import pathlib
+from os.path import join
 from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
 if TYPE_CHECKING:
     import napari
 
-
-class ExampleQWidget(QWidget):
-    # your QWidget.__init__ can optionally request the napari viewer instance
-    # in one of two ways:
-    # 1. use a parameter called `napari_viewer`, as done here
-    # 2. use a type annotation of 'napari.viewer.Viewer' for any parameter
-    def __init__(self, napari_viewer):
-        super().__init__()
-        self.viewer = napari_viewer
-
-        btn = QPushButton("Click me!")
-        btn.clicked.connect(self._on_click)
-
-        self.setLayout(QHBoxLayout())
-        self.layout().addWidget(btn)
-
-    def _on_click(self):
-        print("napari has", len(self.viewer.layers), "layers")
+file_types = ["all", ".czi", ".tif", ".png", ".jpg"]
+reader_plugins = ["napari-aicsimageio", "napari"]
+home_file_choices = [file.name for file in list(pathlib.Path().glob("*.*"))]
 
 
-@magic_factory
-def example_magic_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+def on_init(folder_explorer):
+    """called each time folder_explorer creates a new widget"""
+
+    @folder_explorer.file_extension.changed.connect
+    @folder_explorer.file_directory.changed.connect
+    @folder_explorer.called.connect
+    def _update_file_choices():
+        if folder_explorer.file_extension.value == ["all"]:
+            file_list = list(folder_explorer.file_directory.value.glob("*.*"))
+        else:
+            file_list = sorted(
+                filter(
+                    lambda path: path.suffix
+                    in folder_explorer.file_extension.value,
+                    folder_explorer.file_directory.value.glob("*.*"),
+                )
+            )
+        file_list = [file.name for file in file_list]
+        folder_explorer.file_choices.choices = file_list
+        print("updated file_choices")
 
 
-# Uses the `autogenerate: true` flag in the plugin manifest
-# to indicate it should be wrapped as a magicgui to autogenerate
-# a widget.
-def example_function_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+@magic_factory(
+    widget_init=on_init,
+    auto_call=False,
+    labels=False,
+    call_button="Add Image",
+    file_directory=dict(widget_type="FileEdit", mode="d"),
+    file_extension=dict(widget_type="Select", choices=file_types),
+    reader_plugin=dict(
+        widget_type="RadioButtons", label="Reader", choices=reader_plugins
+    ),
+    file_choices=dict(widget_type="Select", choices=home_file_choices),
+)
+def folder_explorer(
+    viewer: "napari.viewer.Viewer",
+    file_directory=pathlib.Path(),
+    file_extension="all",
+    file_choices=[],
+    reader_plugin="napari-aicsimageio",
+):
+    file_locations = [
+        join(str(file_directory), str(file)) for file in file_choices
+    ]
+    print("opening:", file_locations)
+    viewer.open(path=file_locations, plugin=reader_plugin)
+    return file_locations
