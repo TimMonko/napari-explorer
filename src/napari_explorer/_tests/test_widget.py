@@ -1,6 +1,6 @@
 import numpy as np
 
-from napari_explorer import file_opener, folder_explorer
+from napari_explorer import folder_explorer
 
 
 # make_napari_viewer is a pytest fixture that returns a napari viewer object
@@ -19,18 +19,3 @@ def test_folder_explorer(make_napari_viewer, capsys):
     # read captured output and check that it's as we expected
     captured = capsys.readouterr()
     assert captured.out == "napari has 1 layers\n"
-
-
-def test_file_opener(make_napari_viewer, capsys):
-    viewer = make_napari_viewer()
-    layer = viewer.add_image(np.random.random((100, 100)))
-
-    # this time, our widget will be a MagicFactory or FunctionGui instance
-    my_widget = file_opener()
-
-    # if we "call" this object, it'll execute our function
-    my_widget(viewer.layers[0])
-
-    # read captured output and check that it's as we expected
-    captured = capsys.readouterr()
-    assert captured.out == f"you have selected {layer}\n"
