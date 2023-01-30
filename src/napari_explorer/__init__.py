@@ -3,5 +3,8 @@ try:
 except ImportError:
     __version__ = "unknown"
 
+from ._widget import folder_explorer
 
-__all__ = "folder_explorer"
+__all__ = [
+    "folder_explorer",
+]
