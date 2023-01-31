@@ -5,7 +5,7 @@ from napari_explorer import folder_explorer
 
 # make_napari_viewer is a pytest fixture that returns a napari viewer object
 # capsys is a pytest fixture that captures stdout and stderr output streams
-def test_folder_explorer(make_napari_viewer, capsys):
+def test_folder_explorer(make_napari_viewer):
     # make viewer and add an image layer using our fixture
     viewer = make_napari_viewer()
     viewer.add_image(np.random.random((100, 100)))
