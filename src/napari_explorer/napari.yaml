@@ -1,5 +1,6 @@
 name: napari-explorer
 display_name: Explorer
+visibility: hidden
 contributions:
   commands:
     - id: napari-explorer.folder_explorer
